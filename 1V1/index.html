@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TournamentToolsV2 - 1V1</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.cdnfonts.com/css/sf-pro-display" rel="stylesheet">
+    <link href="https://fonts.cdnfonts.com/css/sf-ui-text-2" rel="stylesheet">
+    <style type="text/tailwindcss">
+        @layer base {
+            html, body {
+                overflow: hidden !important;
+                overscroll-behavior: none;
+                position: fixed;
+                inset: 0;
+                scrollbar-width: none;
+            }
+
+            ::-webkit-scrollbar { width: 0; height: 0; }
+
+            p { @apply text-[#FDF7FA] leading-none; }
+            * { font-family: 'SF Pro Display', sans-serif; }
+            .sfText { font-family: 'SF UI Text', sans-serif; }
+
+            @keyframes gradient-rotate {
+                0%, 100% { background-position: 0% 50%, 200% 50%; }
+            }
+
+            .gradient-border { @apply bg-gradient-to-r from-[#FD86FF] via-[#972899] to-[#FD86FF] bg-[length:200%_100%] animate-[gradient-rotate_5s_linear_infinite]; }
+
+            .greenscreen { @apply bg-gradient-to-bl from-green-400 via-green-600 to-green-800; }
+            .background { @apply bg-[url('https://api.beatkhana.com/api/cdn/view/6b60acf0e904aab298e0eac8612b1e4c.png')] bg-cover; }
+            
+            .player-image { 
+                @apply h-24 w-24 object-cover rounded-[6px];
+                -webkit-user-drag: none;
+                user-select: none;
+            }
+            
+            .player-one { @apply flex flex-row items-center gap-6 w-full; }
+            .player-two { @apply flex flex-row-reverse items-center gap-6 w-full; }
+            
+            .point { @apply w-8 h-8 rounded border-[#434343] flex items-center justify-center bg-white transition-all duration-150 ease-linear; }
+            .point-inactive { @apply bg-[#fdf7fa00] border-3; }
+            
+            .player-name { @apply text-[#FDF7FA] text-[28px] font-bold text-ellipsis text-nowrap overflow-hidden pb-1; }
+            .seed { @apply text-[#fdf7fa8c] text-[20px] font-bold text-nowrap; }
+            
+            .stream-parent { @apply w-full h-full flex flex-row gap-[0px]; }
+            .stream-container { @apply aspect-[240/199]; }
+            .bounding-gradient { @apply w-full from-[#18181bcc] via-15% via-[#43434300] to-[#00000000] flex items-end justify-between p-2; }
+            
+            .player-names, .player-stats { @apply font-semibold text-[24px] pb-2; }
+            
+            .song-card { @apply bg-[#141414] w-[372px] h-[84px] rounded-[15px] flex items-center p-2 gap-[8px]; }
+        }
+    </style>
+</head>
+
+<body class="background select-none flex flex-col min-h-screen">
+    <!-- Header: Player info, round, scoreline -->
+    <header class="p-4 min-[1921px]:p-10 flex justify-between items-center">
+        <div class="player-one">
+            <img id="player1Image" class="player-image" />
+            <div class="flex flex-col gap-1 max-w-104 min-[1921px]:max-w-190 min-w-0">
+                <p id="player1Name" class="player-name text-[28px]"></p>
+                <p id="player1Seed" class="seed"></p>
+            </div>
+        </div>
+
+        <div class="flex flex-row items-center">
+            <div class="flex flex-row gap-2">
+                <span id="lP6" class="point point-inactive"></span>
+                <span id="lP5" class="point point-inactive"></span>
+                <span id="lP4" class="point point-inactive"></span>
+                <span id="lP3" class="point point-inactive"></span>
+                <span id="lP2" class="point point-inactive"></span>
+                <span id="lP1" class="point"></span>
+            </div>
+
+            <div class="logo text-[#FDF7FA] flex flex-col gap-[0px] items-center w-fit mx-8">
+                <p class="text-[30px] font-[100] leading-none">TOURNAMENT</p>
+                <p class="text-[30px] font-[900] tracking-[23px] mr-[-23px] leading-none">TOOLS</p>
+                <div id="roundText"
+                    class="mt-2 bg-[#FDF7FA] w-fit text-[#18181B] text-[12px] font-bold leading-none text-center p-2 px-3 text-balance uppercase">
+                </div>
+            </div>
+
+            <div class="flex flex-row gap-2">
+                <span id="rP1" class="point"></span>
+                <span id="rP2" class="point point-inactive"></span>
+                <span id="rP3" class="point point-inactive"></span>
+                <span id="rP4" class="point point-inactive"></span>
+                <span id="rP5" class="point point-inactive"></span>
+                <span id="rP6" class="point point-inactive"></span>
+            </div>
+        </div>
+
+        <div class="player-two">
+            <img id="player2Image" class="player-image" />
+            <div class="flex flex-col gap-1 max-w-104 min-[1921px]:max-w-190 min-w-0 items-end">
+                <p id="player2Name" class="player-name w-full text-right"></p>
+                <p id="player2Seed" class="seed"></p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main: Player streams with stats -->
+    <main class="playerStreams flex flex-1 flex-row">
+        <div class="stream-parent" id="playerOneStream"></div>
+        <!-- Change color of border + the opacity, depending on how far ahead the player is -->
+        <div class="h-full w-5 bg-[#2e88ff] transition-all duration-75 ease-linear"></div>
+        <div class="stream-parent" id="playerTwoStream"></div>
+    </main>
+
+    <!-- Song card, scores, next match -->
+    <footer class="gap-6 flex-1 flex flex-row justify-between">
+        <!-- Song Card -->
+        <div class="pl-4 min-[1921px]:pl-10 gap-5 flex items-center min-w-1/3">
+            <p class="text-[18px] min-[1921px]:text-[32px] font-[900] leading-none sfText">SONG</p>
+            <div class="h-[45px] w-[2px] bg-white opacity-15"></div>
+            <div class="song-card">
+                <div class="relative h-[64px] w-[64px] flex-shrink-0 pl-[1px]">
+                    <div class="absolute rounded-[10px] gradient-border h-[64px] w-[64px] p-[3px]">
+                        <img id="songCover" alt="Song Cover" class="rounded-[8px]" />
+                    </div>
+                </div>
+                <div class="bg-gradient-to-b from-[#cd58cf] to-[#972899] w-[6px] rounded-full h-[60px]"></div>
+                <div class="song-info flex flex-row justify-between w-full pr-2 min-w-0">
+                    <div class="left-side flex flex-col gap-1 min-w-0 flex-1">
+                        <p id="songArtist"
+                            class="text-[15px] font-[300] pt-1 leading-none sfText text-ellipsis text-nowrap overflow-hidden">
+                        </p>
+                        <p id="songTitle"
+                            class="text-[15px] font-[600] leading-none sfText text-ellipsis text-nowrap overflow-hidden">
+                        </p>
+                        <p id="songMapper"
+                            class="text-[15px] font-[300] pb-1 sfText text-ellipsis text-nowrap overflow-hidden"></p>
+                    </div>
+                    <div class="right-side flex flex-col gap-1 flex-shrink-0 items-end justify-center">
+                        <p id="songKey" class="text-[13px] font-[500] leading-[11px] sfText text-right uppercase"></p>
+                        <img id="songPickImage" class="h-[20px] w-[20px] object-cover rounded-[4px]" alt="Pick">
+                        <p id="songBPM" class="text-[15px] font-[500] leading-none sfText text-right uppercase"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Player Scoring -->
+        <div class="flex flex-col items-center justify-center relative min-w-1/4">
+            <div class="flex flex-row items-start justify-center gap-8">
+                <div class="w-full flex flex-col items-end gap-2 pr-4">
+                    <p id="player1Score" class="text-[44px] font-bold transition-all ease-linear"></p>
+                    <p id="player1Accuracy" class="text-[32px] opacity-50 font-semibold"></p>
+                </div>
+                <div class="w-full flex flex-col items-start gap-1">
+                    <p id="player2Score" class="text-[44px] font-bold transition-all ease-linear"></p>
+                    <p id="player2Accuracy" class="text-[32px] opacity-50 font-semibold"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Place casters here, by the use of Discord StreamKit - I've yet to finish the styling for this, because fuck StreamKit lmao -->
+
+        <!-- Next Match -->
+        <div class="pr-4 min-[1921px]:pr-10 gap-5 flex items-center justify-end min-w-1/3">
+            <div class="flex flex-col items-center">
+                <div
+                    class="bg-[#D9D9D9] rounded-[8px] p-1 min-[1921px]:p-2 flex flex-row gap-2 items-center min-w-[200px] max-w-[200px]">
+                    <img id="upcomingPlayer1Image" class="h-6 w-6 object-cover rounded-[4px]">
+                    <p id="upcomingPlayer1Name"
+                        class="sfText text-[14px] text-[#18181B] font-medium truncate w-full whitespace-nowrap pb-[2px]">
+                    </p>
+                </div>
+                <p class="sfText my-2 font-medium">VS</p>
+                <div
+                    class="bg-[#D9D9D9] rounded-[8px] p-1 min-[1921px]:p-2 flex flex-row gap-2 items-center min-w-[200px] max-w-[200px]">
+                    <img id="upcomingPlayer2Image" class="h-6 w-6 object-cover rounded-[4px]">
+                    <p id="upcomingPlayer2Name" class="sfText text-[14px] text-[#18181B] font-medium truncate w-full whitespace-nowrap pb-[2px]">
+                    </p>
+                </div>
+            </div>
+            <div class="h-[45px] w-[2px] bg-white opacity-15"></div>
+            <p class="text-[18px] min-[1921px]:text-[32px] font-[900] leading-none sfText">UPCOMING</p>
+        </div>
+    </footer>
+
+    <script>
+        const data = {
+            round: "ROUND 5 - Lower Bracket",
+            players: [
+                {
+                    name: "Hawk",
+                    seed: "SEED 2",
+                    logo: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png?s=80"
+                },
+                {
+                    name: "Zana",
+                    seed: "SEED 1",
+                    logo: "https://api.beatkhana.com/api/cdn/view/bebe861eb26810c52711490ea197c835.jpg?s=80"
+                }
+            ],
+            upcomingMatch: [
+                { name: "Penguin", logo: "https://api.beatkhana.com/api/cdn/view/301c94d75d4a6f2d4af9a8da7c9a20fc.png?s=80" },
+                { name: "Abbad", logo: "https://cdn.discordapp.com/avatars/650076658014879766/808667a9da0a99efe87737fc9cdec053.png?s=80" }
+            ],
+            currentMap: {
+                artist: "Lauv",
+                title: "Breathe",
+                mapper: "NightHawk",
+                cover: "https://api.beatkhana.com/api/cdn/view/b8afd6db2fc118dc7417ef6d2c7666a8.jpg",
+                key: "28ded",
+                bpm: 192
+            }
+        };
+
+        const $ = id => document.getElementById(id);
+        const setText = (id, text) => $(id).textContent = text;
+        const setSrc = (id, src) => $(id).src = src;
+
+        const createPlayerStream = (prefix, player, isRight = false) => {
+            const gradientDir = isRight ? 'bg-gradient-to-b items-start pt-4' : 'bg-gradient-to-t';
+            const nameAlign = isRight ? 'start' : 'end';
+
+            return `
+                <div class="greenscreen stream-container flex flex-grow h-auto w-full">
+                    <div class="bounding-gradient bg-gradient-to-t w-full flex justify-${nameAlign}">
+                        <div class="flex flex-col player-stats pr-2 gap-2 items-${nameAlign} ml-[6px]">
+                            <p id="${prefix}Combo" class="text-[64px]">0x</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        const populatePlayer = (idx, prefix) => {
+            const player = data.players[idx];
+            setText(`player${idx + 1}Name`, player.name);
+            setText(`player${idx + 1}Seed`, player.seed);
+            setSrc(`player${idx + 1}Image`, player.logo);
+
+            const container = $(prefix === 'l' ? 'playerOneStream' : 'playerTwoStream');
+            container.innerHTML = createPlayerStream(prefix.toUpperCase(), {
+                name: player.name,
+                pfp: player.logo
+            }, prefix === 'r');
+        };
+
+        populatePlayer(0, 'l');
+        populatePlayer(1, 'r');
+
+        setText('roundText', data.round);
+        setText('upcomingPlayer1Name', data.upcomingMatch[0].name);
+        setSrc('upcomingPlayer1Image', data.upcomingMatch[0].logo);
+        setText('upcomingPlayer2Name', data.upcomingMatch[1].name);
+        setSrc('upcomingPlayer2Image', data.upcomingMatch[1].logo);
+        setText('songArtist', data.currentMap.artist);
+        setText('songTitle', data.currentMap.title);
+        setText('songMapper', data.currentMap.mapper);
+        setSrc('songCover', data.currentMap.cover);
+        setText('songKey', data.currentMap.key);
+        $('songBPM').innerHTML = `BPM <span class="font-[900]">${data.currentMap.bpm}</span>`;
+        setSrc('songPickImage', data.players[1].logo);
+
+        // Default scores
+        setText('player1Score', 1234567);
+        setText('player1Accuracy', '94.96%');
+        setText('player2Score', 1234567);
+        setText('player2Accuracy', '94.96%');
+    </script>
+</body>
+
+</html>

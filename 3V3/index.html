@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TournamentToolsV2 - 3V3</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.cdnfonts.com/css/sf-pro-display" rel="stylesheet">
+    <link href="https://fonts.cdnfonts.com/css/sf-ui-text-2" rel="stylesheet">
+    <style type="text/tailwindcss">
+        @layer base {
+            html, body {
+                overflow: hidden !important;
+                overscroll-behavior: none;
+                position: fixed;
+                inset: 0;
+                scrollbar-width: none;
+            }
+
+            ::-webkit-scrollbar { width: 0; height: 0; }
+
+            p { @apply text-[#FDF7FA] leading-none; }
+            * { font-family: 'SF Pro Display', sans-serif; }
+            .sfText { font-family: 'SF UI Text', sans-serif; }
+
+            @keyframes gradient-rotate {
+                0%, 100% { background-position: 0% 50%, 200% 50%; }
+            }
+
+            .gradient-border { @apply bg-gradient-to-r from-[#FD86FF] via-[#972899] to-[#FD86FF] bg-[length:200%_100%] animate-[gradient-rotate_5s_linear_infinite]; }
+
+            .greenscreen { @apply bg-gradient-to-bl from-green-400 via-green-600 to-green-800; }
+            .background { @apply bg-[url('https://api.beatkhana.com/api/cdn/view/6b60acf0e904aab298e0eac8612b1e4c.png')] bg-cover; }
+            
+            .team-image { 
+                @apply h-24 w-24 object-cover rounded-[6px];
+                -webkit-user-drag: none;
+                user-select: none;
+            }
+            
+            .team-one { @apply flex flex-row items-center gap-6 w-full; }
+            .team-two { @apply flex flex-row-reverse items-center gap-6 w-full; }
+            
+            .point { @apply w-8 h-8 rounded border-[#434343] flex items-center justify-center bg-white transition-all duration-150 ease-linear; }
+            .point-inactive { @apply bg-[#fdf7fa00] border-3; }
+            
+            .team-name { @apply text-[#FDF7FA] text-[28px] font-bold text-ellipsis text-nowrap overflow-hidden pb-1; }
+            .seed { @apply text-[#fdf7fa8c] text-[20px] font-bold text-nowrap; }
+            
+            .stream-parent { @apply flex flex-row gap-[0px]; }
+            .stream-container { @apply flex-1 aspect-[160/97] flex; }
+            .bounding-gradient { @apply w-full from-[#18181bcc] via-15% via-[#43434300] to-[#00000000] flex items-end justify-between p-2; }
+            
+            .player-names, .player-stats { @apply font-semibold text-[24px] pb-2; }
+            
+            .song-card { @apply bg-[#141414] w-[372px] h-[84px] rounded-[15px] flex items-center p-2 gap-[8px]; }
+        }
+    </style>
+</head>
+
+<body class="background select-none flex flex-col min-h-screen">
+    <!-- Header: Team info, round, scoreline -->
+    <header class="p-4 min-[1921px]:p-10 flex justify-between items-center">
+        <div class="team-one">
+            <img id="team1Image" class="team-image" />
+            <div class="flex flex-col gap-1 max-w-104 min-[1921px]:max-w-190 min-w-0">
+                <p id="team1Name" class="team-name"></p>
+                <p id="team1Seed" class="seed"></p>
+            </div>
+        </div>
+
+        <div class="flex flex-row items-center">
+            <div class="flex flex-row gap-2">
+                <span id="lP6" class="point point-inactive"></span>
+                <span id="lP5" class="point point-inactive"></span>
+                <span id="lP4" class="point point-inactive"></span>
+                <span id="lP3" class="point point-inactive"></span>
+                <span id="lP2" class="point point-inactive"></span>
+                <span id="lP1" class="point"></span>
+            </div>
+
+            <div class="logo text-[#FDF7FA] flex flex-col gap-[0px] items-center w-fit mx-8">
+                <p class="text-[30px] font-[100] leading-none">TOURNAMENT</p>
+                <p class="text-[30px] font-[900] tracking-[23px] mr-[-23px] leading-none">TOOLS</p>
+                <div id="roundText"
+                    class="mt-2 bg-[#FDF7FA] w-fit text-[#18181B] text-[12px] font-bold leading-none text-center p-2 px-3 text-balance uppercase">
+                </div>
+            </div>
+
+            <div class="flex flex-row gap-2">
+                <span id="rP1" class="point"></span>
+                <span id="rP2" class="point point-inactive"></span>
+                <span id="rP3" class="point point-inactive"></span>
+                <span id="rP4" class="point point-inactive"></span>
+                <span id="rP5" class="point point-inactive"></span>
+                <span id="rP6" class="point point-inactive"></span>
+            </div>
+        </div>
+
+        <div class="team-two">
+            <img id="team2Image" class="team-image" />
+            <div class="flex flex-col gap-1 max-w-104 min-[1921px]:max-w-190 min-w-0 items-end">
+                <p id="team2Name" class="team-name w-full text-right"></p>
+                <p id="team2Seed" class="seed"></p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main: Player streams with stats -->
+    <main
+        class="playerStreams border-b-[#2e88ff] border-t-[#ff0000] border-x-0 border-8 transition-all duration-75 ease-linear">
+        <div class="team-one-streams stream-parent" id="teamOneStreams"></div>
+        <div class="w-full h-[1px]"></div>
+        <div class="team-two-streams stream-parent" id="teamTwoStreams"></div>
+    </main>
+
+    <!-- Song card, scores, next match -->
+    <footer class="gap-6 flex-1 flex flex-row justify-between">
+        <!-- Song Card -->
+        <div class="pl-4 min-[1921px]:pl-10 gap-5 flex items-center min-w-1/3">
+            <p class="text-[18px] min-[1921px]:text-[32px] font-[900] leading-none sfText">SONG</p>
+            <div class="h-[45px] w-[2px] bg-white opacity-15"></div>
+            <div class="song-card">
+                <div class="relative h-[64px] w-[64px] flex-shrink-0 pl-[1px]">
+                    <div class="absolute rounded-[10px] gradient-border h-[64px] w-[64px] p-[3px]">
+                        <img id="songCover" class="rounded-[8px]" />
+                    </div>
+                </div>
+                <div class="bg-gradient-to-b from-[#cd58cf] to-[#972899] w-[6px] rounded-full h-[60px]"></div>
+                <div class="song-info flex flex-row justify-between w-full pr-2 min-w-0">
+                    <div class="left-side flex flex-col gap-1 min-w-0 flex-1">
+                        <p id="songArtist"
+                            class="text-[15px] font-[300] pt-1 leading-none sfText text-ellipsis text-nowrap overflow-hidden">
+                        </p>
+                        <p id="songTitle"
+                            class="text-[15px] font-[600] leading-none sfText text-ellipsis text-nowrap overflow-hidden">
+                        </p>
+                        <p id="songMapper"
+                            class="text-[15px] font-[300] pb-1 sfText text-ellipsis text-nowrap overflow-hidden"></p>
+                    </div>
+                    <div class="right-side flex flex-col gap-1 flex-shrink-0 items-end justify-center">
+                        <p id="songKey" class="text-[13px] font-[500] leading-[11px] sfText text-right uppercase"></p>
+                        <img id="songPickImage" class="h-[20px] w-[20px] object-cover rounded-[4px]">
+                        <p id="songBPM" class="text-[15px] font-[500] leading-none sfText text-right uppercase"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Scoring -->
+        <div class="flex flex-col items-center justify-center relative min-w-1/4">
+            <div class="flex flex-row items-start justify-center gap-8">
+                <div class="w-full flex flex-col items-end gap-2 pr-4">
+                    <p id="team1Score" class="text-[44px] font-bold transition-all ease-linear"></p>
+                    <p id="team1Accuracy" class="text-[32px] opacity-50 font-semibold"></p>
+                </div>
+                <div class="w-full flex flex-col items-start gap-1">
+                    <p id="team2Score" class="text-[44px] font-bold transition-all ease-linear"></p>
+                    <p id="team2Accuracy" class="text-[32px] opacity-50 font-semibold"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Place casters here, by the use of Discord StreamKit - I've yet to finish the styling for this, because fuck StreamKit lmao -->
+
+        <!-- Next Match -->
+        <div class="pr-4 min-[1921px]:pr-10 gap-5 flex items-center justify-end min-w-1/3">
+            <div class="flex flex-col items-center">
+                <div
+                    class="bg-[#D9D9D9] rounded-[8px] p-1 min-[1921px]:p-2 flex flex-row gap-2 items-center min-w-[200px] max-w-[200px]">
+                    <img id="upcomingTeam1Image" class="h-6 w-6 object-cover rounded-[4px]">
+                    <p id="upcomingTeam1Name"
+                        class="sfText text-[14px] text-[#18181B] font-medium truncate w-full whitespace-nowrap pb-[2px]">
+                    </p>
+                </div>
+                <p class="sfText my-2 font-medium">VS</p>
+                <div
+                    class="bg-[#D9D9D9] rounded-[8px] p-1 min-[1921px]:p-2 flex flex-row gap-2 items-center min-w-[200px] max-w-[200px]">
+                    <img id="upcomingTeam2Image" class="h-6 w-6 object-cover rounded-[4px]">
+                    <p id="upcomingTeam2Name"
+                        class="sfText text-[14px] text-[#18181B] font-medium truncate w-full whitespace-nowrap pb-[2px]">
+                    </p>
+                </div>
+            </div>
+            <div class="h-[45px] w-[2px] bg-white opacity-15"></div>
+            <p class="text-[18px] min-[1921px]:text-[32px] font-[900] leading-none sfText">UPCOMING</p>
+        </div>
+    </footer>
+
+    <script>
+        const data = {
+            round: "ROUND 5 - Lower Bracket",
+            teams: [
+                {
+                    name: "Hawk's Tuahs",
+                    seed: "SEED 2",
+                    logo: "https://api.beatkhana.com/api/cdn/view/20fe8c98d0de00397cfd7334201c7aa3.png",
+                    players: [
+                        { name: "Zana", pfp: "https://api.beatkhana.com/api/cdn/view/bebe861eb26810c52711490ea197c835.jpg?s=80" },
+                        { name: "Kaxle", pfp: "https://cdn.discordapp.com/avatars/650076658014879766/808667a9da0a99efe87737fc9cdec053.png?s=80" },
+                        { name: "Viking", pfp: "https://api.beatkhana.com/api/cdn/view/986bd8e793651ef2254f696eea490ce3.jpg?s=80" }
+                    ]
+                },
+                {
+                    name: "freaky mapping group featuring bizzy and saltybutter",
+                    seed: "SEED 1",
+                    logo: "https://api.beatkhana.com/api/cdn/view/a22a407517c19d3f1376713d79e0390d.png",
+                    players: [
+                        { name: "Monke", pfp: "https://cdn.discordapp.com/avatars/767492851784613888/e4e55639073f0ace35abac11b05e2e16.png?s=80" },
+                        { name: "Bizzy", pfp: "https://api.beatkhana.com/api/cdn/view/310b8104c5631af01826862382dc56d0.jpeg?s=80" },
+                        { name: "Cyanite", pfp: "https://cdn.discordapp.com/avatars/705943856234889238/764e4a5b755c633a0d9265f39e099777.png?s=80" }
+                    ]
+                }
+            ],
+            upcomingMatch: [
+                { name: "Fishy Fumo Nation", logo: "https://api.beatkhana.com/api/cdn/view/51c299a80ce816e90dabbe1eb438021f.png" },
+                { name: "meow meow :3", logo: "https://api.beatkhana.com/api/cdn/view/12e38d18a9ec25c8e84e2b87bb8f6392.jpg" }
+            ],
+            currentMap: {
+                artist: "Lauv",
+                title: "Breathe",
+                mapper: "NightHawk",
+                cover: "https://api.beatkhana.com/api/cdn/view/b8afd6db2fc118dc7417ef6d2c7666a8.jpg",
+                key: "28ded",
+                bpm: 192
+            }
+        };
+
+        const $ = id => document.getElementById(id);
+        const setText = (id, text) => $(id).textContent = text;
+        const setSrc = (id, src) => $(id).src = src;
+
+        const createPlayerStream = (prefix, player, isBottom = false) => {
+            const gradientDir = isBottom ? 'bg-gradient-to-b items-start pt-4' : 'bg-gradient-to-t';
+            const statsOrder = isBottom
+                ? `<p id="${prefix}Accuracy" class="font-medium">99.99%</p><p id="${prefix}Combo">0x</p>`
+                : `<p id="${prefix}Combo">0x</p><p id="${prefix}Accuracy" class="font-medium">99.99%</p>`;
+
+            return `
+                <div class="greenscreen stream-container">
+                    <div class="bounding-gradient ${gradientDir}">
+                        <div class="flex flex-row items-center gap-2">
+                            <img id="${prefix}PFP" src="${player.pfp}" class="h-12 w-12 object-cover rounded-[6px] mb-2 mx-2">
+                            <p id="${prefix}Name" class="player-names">${player.name}</p>
+                        </div>
+                        <div class="flex flex-col player-stats items-end pr-2 gap-2">
+                            ${statsOrder}
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        const populateTeam = (idx, prefix) => {
+            const team = data.teams[idx];
+            setText(`team${idx + 1}Name`, team.name);
+            setText(`team${idx + 1}Seed`, team.seed);
+            setSrc(`team${idx + 1}Image`, team.logo);
+
+            const container = $(prefix === 'l' ? 'teamOneStreams' : 'teamTwoStreams');
+            container.innerHTML = team.players.map((p, i) =>
+                createPlayerStream(`${prefix}P${i + 1}`, p, prefix === 'r')
+            ).join('');
+        };
+
+        populateTeam(0, 'l');
+        populateTeam(1, 'r');
+
+        setText('roundText', data.round);
+        setText('upcomingTeam1Name', data.upcomingMatch[0].name);
+        setSrc('upcomingTeam1Image', data.upcomingMatch[0].logo);
+        setText('upcomingTeam2Name', data.upcomingMatch[1].name);
+        setSrc('upcomingTeam2Image', data.upcomingMatch[1].logo);
+        setText('songArtist', data.currentMap.artist);
+        setText('songTitle', data.currentMap.title);
+        setText('songMapper', data.currentMap.mapper);
+        setSrc('songCover', data.currentMap.cover);
+        setText('songKey', data.currentMap.key);
+        $('songBPM').innerHTML = `BPM <span class="font-[900]">${data.currentMap.bpm}</span>`;
+        setSrc('songPickImage', data.teams[1].logo);
+
+        // Default scores
+        setText('team1Score', 1234567);
+        setText('team1Accuracy', '94.96%');
+        setText('team2Score', 1234567);
+        setText('team2Accuracy', '94.96%');
+    </script>
+</body>
+
+</html>

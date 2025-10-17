@@ -1,0 +1,873 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TournamentToolsV2 - 1V1 - Picks and Bans</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.cdnfonts.com/css/sf-pro-display" rel="stylesheet">
+    <link href="https://fonts.cdnfonts.com/css/sf-ui-text-2" rel="stylesheet">
+    <style type="text/tailwindcss">
+        @layer base {
+            html, body {
+                overflow: hidden !important;
+                overscroll-behavior: none;
+                position: fixed;
+                inset: 0;
+                scrollbar-width: none;
+            }
+
+            ::-webkit-scrollbar { width: 0; height: 0; }
+
+            p { @apply text-[#FDF7FA] leading-none; }
+            * { font-family: 'SF Pro Display', sans-serif; }
+            .sfText { font-family: 'SF UI Text', sans-serif; }
+
+            .background { @apply bg-[url('https://api.beatkhana.com/api/cdn/view/6b60acf0e904aab298e0eac8612b1e4c.png')] bg-cover; }
+            
+            .player-image { 
+                @apply h-24 w-24 object-cover rounded-[6px];
+                -webkit-user-drag: none;
+                user-select: none;
+            }
+            
+            .player-one { @apply flex flex-row items-center gap-6 w-full; }
+            .player-two { @apply flex flex-row-reverse items-center gap-6 w-full; }
+            
+            .point { @apply w-8 h-8 rounded border-[#434343] flex items-center justify-center bg-white transition-all duration-150 ease-linear; }
+            .point-inactive { @apply bg-[#fdf7fa00] border-3; }
+            
+            .player-name { @apply text-[#FDF7FA] text-[28px] font-bold text-ellipsis text-nowrap overflow-hidden pb-1; }
+            .seed { @apply text-[#fdf7fa8c] text-[20px] font-bold text-nowrap; }
+            
+            .song-card { @apply bg-[#141414a6] backdrop-blur-sm w-[390px] rounded-[15px] flex items-center p-2 gap-[8px]; }
+        }
+    </style>
+</head>
+
+<body class="background select-none flex flex-col min-h-screen flex-1">
+    <!-- Header: Player info, round, scoreline -->
+    <header class="p-6 min-[1921px]:p-10 flex justify-between items-center min-h-[128px]">
+        <div class="player-one">
+            <img id="player1Image" class="player-image"
+                src="https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png" />
+            <div class="flex flex-col gap-1 max-w-104 min-[1921px]:max-w-190 min-w-0">
+                <p id="player1Name" class="player-name">Hawk</p>
+                <p id="player1Seed" class="seed">SEED 2</p>
+            </div>
+        </div>
+
+        <div class="flex flex-row items-center">
+            <div class="flex flex-row gap-2">
+                <span id="lP6" class="point point-inactive"></span>
+                <span id="lP5" class="point point-inactive"></span>
+                <span id="lP4" class="point point-inactive"></span>
+                <span id="lP3" class="point point-inactive"></span>
+                <span id="lP2" class="point point-inactive"></span>
+                <span id="lP1" class="point"></span>
+            </div>
+
+            <div class="logo text-[#FDF7FA] flex flex-col gap-[0px] items-center w-fit mx-8">
+                <p class="text-[30px] font-[100] leading-none">TOURNAMENT</p>
+                <p class="text-[30px] font-[900] tracking-[23px] mr-[-23px] leading-none">TOOLS</p>
+                <div id="roundText"
+                    class="mt-2 bg-[#FDF7FA] w-fit text-[#18181B] text-[12px] font-bold leading-none text-center p-2 px-3 text-balance uppercase">
+                    ROUND 5 - Lower Bracket
+                </div>
+            </div>
+
+            <div class="flex flex-row gap-2">
+                <span id="rP1" class="point"></span>
+                <span id="rP2" class="point point-inactive"></span>
+                <span id="rP3" class="point point-inactive"></span>
+                <span id="rP4" class="point point-inactive"></span>
+                <span id="rP5" class="point point-inactive"></span>
+                <span id="rP6" class="point point-inactive"></span>
+            </div>
+        </div>
+
+        <div class="player-two">
+            <img id="player2Image" class="player-image"
+                src="https://api.beatkhana.com/api/cdn/view/bebe861eb26810c52711490ea197c835.jpg" />
+            <div class="flex flex-col gap-1 max-w-104 min-[1921px]:max-w-190 min-w-0 items-end">
+                <p id="player2Name" class="player-name w-full text-right">Zana</p>
+                <p id="player2Seed" class="seed">SEED 1</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main: Map-pool -->
+    <main id="songCards" class="gap-2 flex-1 flex flex-row flex-wrap items-center justify-center content-center max-h-3/4 min-h-3/4">
+
+    </main>
+
+    <!-- Text -->
+    <footer class="gap-6 flex-1 flex flex-row items-center justify-center">
+        <p class="text-[64px] font-bold opacity-75">PICKS AND BANS</p>
+    </footer>
+
+    <script>
+
+        /** 
+         * Notes for this.
+         * It supports up to 28 songs, when viewing in 1920x1080 resolution.
+         * It supports up to 54 songs, when viewing in 2560x1440 resolution.  
+        **/
+    
+        const songs = [
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Normal",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Hard",
+                pickedBy: "",
+                picked: false,
+                banned: false,
+                tiebreaker: true
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Expert",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: true,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "ExpertPlus",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: true,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Easy",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Normal",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Hard",
+                pickedBy: "",
+                picked: false,
+                banned: false,
+                tiebreaker: true
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Expert",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: true,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "ExpertPlus",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: true,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Easy",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Normal",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Hard",
+                pickedBy: "",
+                picked: false,
+                banned: false,
+                tiebreaker: true
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Expert",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: true,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "ExpertPlus",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: true,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Easy",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Normal",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Hard",
+                pickedBy: "",
+                picked: false,
+                banned: false,
+                tiebreaker: true
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Expert",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: true,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "ExpertPlus",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: true,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Easy",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Normal",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Hard",
+                pickedBy: "",
+                picked: false,
+                banned: false,
+                tiebreaker: true
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Expert",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: true,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "ExpertPlus",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: true,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Easy",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Normal",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Hard",
+                pickedBy: "",
+                picked: false,
+                banned: false,
+                tiebreaker: true
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Expert",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: true,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "ExpertPlus",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: true,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Easy",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Normal",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Hard",
+                pickedBy: "",
+                picked: false,
+                banned: false,
+                tiebreaker: true
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Expert",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: true,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "ExpertPlus",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: true,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Easy",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Normal",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Hard",
+                pickedBy: "",
+                picked: false,
+                banned: false,
+                tiebreaker: true
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Expert",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: true,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "ExpertPlus",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: true,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Easy",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Normal",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Hard",
+                pickedBy: "",
+                picked: false,
+                banned: false,
+                tiebreaker: true
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Expert",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: true,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "ExpertPlus",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: true,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Easy",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Normal",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Hard",
+                pickedBy: "",
+                picked: false,
+                banned: false,
+                tiebreaker: true
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Expert",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: true,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "ExpertPlus",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: true,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Easy",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Normal",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: false,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Hard",
+                pickedBy: "",
+                picked: false,
+                banned: false,
+                tiebreaker: true
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "Expert",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: false,
+                banned: true,
+                tiebreaker: false
+            },
+            {
+                cover: "https://eu.cdn.beatsaver.com/883f53beba27c9d27204e512ac3583b9de5e9b74.jpg",
+                artist: "Fvrwvrd & Nolanimations",
+                title: "MEMORY SURGE",
+                mapper: "Mapped By BSWC Team",
+                key: "48f0f",
+                bpm: 170,
+                difficulty: "ExpertPlus",
+                pickedBy: "https://cdn.discordapp.com/avatars/592779895084679188/5c057cb0248defa73735531e1090c64c.png",
+                picked: true,
+                banned: false,
+                tiebreaker: false
+            }
+        ]
+
+        function colorSwitch(diff) {
+            switch (diff) {
+                case 'Easy':
+                    return 'from-[#35bd5e] to-[#0b7a28]';
+                case 'Normal':
+                    return 'from-[#2c9ef5] to-[#065bc4]';
+                case 'Hard':
+                    return 'from-[#d96a16] to-[#b33d03]';
+                case 'Expert':
+                    return 'from-[#f01e07] to-[#a70202]';
+                case 'ExpertPlus':
+                    return 'from-[#cd58cf] to-[#972899]';
+                default:
+                    return 'text-white';
+            }
+        }
+
+        const songCardsContainer = document.getElementById('songCards');
+
+        songs.forEach(song => {
+            const songCard = document.createElement('div');
+            songCard.className = 'song-card';
+
+            song.picked ? songCard.style.backgroundColor = '#062e10a8' : null;
+            song.banned ? songCard.style.backgroundColor = '#410606a6' : null;
+            song.tiebreaker ? songCard.style.backgroundColor = '#f0c02030' : null;
+
+            songCard.innerHTML = `
+                <img id="songCover" class="rounded-[10px] gradient-border h-[92px] w-[92px] p-[3px]" src="${song.cover}" />
+                <div class="bg-gradient-to-b ${colorSwitch(song.difficulty)} w-[8px] rounded-full h-[80px] transition-all duration-150 "></div>
+                <div class="song-info flex flex-row justify-between w-full pr-2 min-w-0">
+                    <div class="left-side flex flex-col gap-2 min-w-0 flex-1">
+                        <p id="songArtist" class="text-[15px] font-[300] pt-2 leading-none sfText text-ellipsis text-nowrap overflow-hidden opacity-75">${song.artist}</p>
+                        <p id="songTitle" class="text-[16px] font-[600] leading-none sfText text-ellipsis text-nowrap overflow-hidden">${song.title}</p>
+                        <p id="songMapper" class="text-[15px] font-[300] pb-2 sfText text-ellipsis text-nowrap overflow-hidden opacity-50">${song.mapper}</p>
+                    </div>
+                    <div class="right-side flex flex-col gap-1 flex-shrink-0 items-end justify-center">
+                        <p id="songKey" class="text-[14px] font-[500] leading-[11px] sfText text-right uppercase"> ${song.key}</p>
+                        <img id="songPickImage" class="transition-all duration-150 h-[28px] w-[28px] object-cover rounded-[4px] ${song.picked && !song.tiebreaker || song.banned && !song.tiebreaker ? 'opacity-100' : 'opacity-0'}" src="${song.pickedBy}" />
+                        <p id="songBPM" class="text-[14px] font-[500] leading-none sfText text-right uppercase">BPM: <span class="font-[900]">${song.bpm}</span></p>
+                    </div>
+                </div>
+            `;
+
+            songCardsContainer.appendChild(songCard);
+        });
+
+    </script>
+</body>
+
+</html>
