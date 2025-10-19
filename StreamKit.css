@@ -1,0 +1,69 @@
+/**
+* URL for StreamKit, with correct parameters:
+* https://streamkit.discord.com/overlay/voice/SERVER_ID/VOICE_CHAT_ID?icon=true&online=true&logo=white&text_color=%23ffffff&text_size=20&text_outline_color=%23000000&text_outline_size=0&text_shadow_color=%23000000&text_shadow_size=0&bg_color=%231e2124&bg_opacity=0&bg_shadow_color=%23000000&bg_shadow_size=0&invite_code=&limit_speaking=false&small_avatars=false&hide_names=false&fade_chat=0&streamer_avatar_first=true
+* Custom CSS to be added below.
+*
+* Custom StreamKit-style by hawk_bs
+* 
+* (C) StreamKit, Discord, 2025
+*/
+
+@font-face {
+    font-family: "SF Pro Text";
+    src: url("https://db.onlinewebfonts.com/t/116f64f66c1cfef86f6eb0c37b61b43b.woff2")format("woff2"),
+        url("https://db.onlinewebfonts.com/t/116f64f66c1cfef86f6eb0c37b61b43b.woff")format("woff");
+}
+
+body {
+    margin: 0px auto;
+    overflow: hidden;
+    background-color: rgba(0, 0, 0, 0);
+    transform: scale(125%) !important;
+    margin-left: 300px;
+}
+
+* {
+    font-family: "SF Pro Text" !important;
+    font-weight: 500 !important;
+}
+
+span[class*="Voice_name"] {
+    font-size: 24px !important;
+}
+
+div[class*="voice_username"] {
+    margin-left: 6px !important;
+    margin-bottom: 15px !important;
+}
+
+img[class*="voice_avatar"] {
+    display: none !important;
+}
+
+li[class*="self_mute"]::before {
+    transition: 100ms ease-in-out;
+    background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEwIDBDNy44OTIwNSAwIDYuMTgxODIgMS42Nzk2OSA2LjE4MTgyIDMuNzVWMTBDNi4xODE4MiAxMi4wNzAzIDcuODkyMDUgMTMuNzUgMTAgMTMuNzVDMTIuMTA4IDEzLjc1IDEzLjgxODIgMTIuMDcwMyAxMy44MTgyIDEwVjMuNzVDMTMuODE4MiAxLjY3OTY5IDEyLjEwOCAwIDEwIDBaTTQuOTA5MDkgOC40Mzc1QzQuOTA5MDkgNy45MTc5NyA0LjQ4MzUyIDcuNSAzLjk1NDU1IDcuNUMzLjQyNTU3IDcuNSAzIDcuOTE3OTcgMyA4LjQzNzVWMTBDMyAxMy40ODA1IDUuNjMyOTUgMTYuMzU1NSA5LjA0NTQ1IDE2LjgxMjVWMTguMTI1SDcuMTM2MzZDNi42MDczOSAxOC4xMjUgNi4xODE4MiAxOC41NDMgNi4xODE4MiAxOS4wNjI1QzYuMTgxODIgMTkuNTgyIDYuNjA3MzkgMjAgNy4xMzYzNiAyMEgxMEgxMi44NjM2QzEzLjM5MjYgMjAgMTMuODE4MiAxOS41ODIgMTMuODE4MiAxOS4wNjI1QzEzLjgxODIgMTguNTQzIDEzLjM5MjYgMTguMTI1IDEyLjg2MzYgMTguMTI1SDEwLjk1NDVWMTYuODEyNUMxNC4zNjcgMTYuMzU1NSAxNyAxMy40ODA1IDE3IDEwVjguNDM3NUMxNyA3LjkxNzk3IDE2LjU3NDQgNy41IDE2LjA0NTUgNy41QzE1LjUxNjUgNy41IDE1LjA5MDkgNy45MTc5NyAxNS4wOTA5IDguNDM3NVYxMEMxNS4wOTA5IDEyLjc2MTcgMTIuODExOSAxNSAxMCAxNUM3LjE4ODA3IDE1IDQuOTA5MDkgMTIuNzYxNyA0LjkwOTA5IDEwVjguNDM3NVoiIGZpbGw9IiNGRjNBM0EiLz4KPC9zdmc+Cg==") !important;
+}
+
+li[class*="wrapper_speaking"] {
+    opacity: 100% !important;
+}
+
+li[class*="Voice_voiceState"]::before {
+    transition: 100ms ease-in-out;
+    background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEwIDBDNy44OTIwNSAwIDYuMTgxODIgMS42Nzk2OSA2LjE4MTgyIDMuNzVWMTBDNi4xODE4MiAxMi4wNzAzIDcuODkyMDUgMTMuNzUgMTAgMTMuNzVDMTIuMTA4IDEzLjc1IDEzLjgxODIgMTIuMDcwMyAxMy44MTgyIDEwVjMuNzVDMTMuODE4MiAxLjY3OTY5IDEyLjEwOCAwIDEwIDBaTTQuOTA5MDkgOC40Mzc1QzQuOTA5MDkgNy45MTc5NyA0LjQ4MzUyIDcuNSAzLjk1NDU1IDcuNUMzLjQyNTU3IDcuNSAzIDcuOTE3OTcgMyA4LjQzNzVWMTBDMyAxMy40ODA1IDUuNjMyOTUgMTYuMzU1NSA5LjA0NTQ1IDE2LjgxMjVWMTguMTI1SDcuMTM2MzZDNi42MDczOSAxOC4xMjUgNi4xODE4MiAxOC41NDMgNi4xODE4MiAxOS4wNjI1QzYuMTgxODIgMTkuNTgyIDYuNjA3MzkgMjAgNy4xMzYzNiAyMEgxMEgxMi44NjM2QzEzLjM5MjYgMjAgMTMuODE4MiAxOS41ODIgMTMuODE4MiAxOS4wNjI1QzEzLjgxODIgMTguNTQzIDEzLjM5MjYgMTguMTI1IDEyLjg2MzYgMTguMTI1SDEwLjk1NDVWMTYuODEyNUMxNC4zNjcgMTYuMzU1NSAxNyAxMy40ODA1IDE3IDEwVjguNDM3NUMxNyA3LjkxNzk3IDE2LjU3NDQgNy41IDE2LjA0NTUgNy41QzE1LjUxNjUgNy41IDE1LjA5MDkgNy45MTc5NyAxNS4wOTA5IDguNDM3NVYxMEMxNS4wOTA5IDEyLjc2MTcgMTIuODExOSAxNSAxMCAxNUM3LjE4ODA3IDE1IDQuOTA5MDkgMTIuNzYxNyA0LjkwOTA5IDEwVjguNDM3NVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=");
+    border-radius: 0px;
+    width: 20px;
+    height: 20px;
+    content: " ";
+}
+
+li[class*="Voice_voiceState"] {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    height: 30px;
+    opacity: 50%;
+    transition-timing-function: ease-in-out;
+    transition-duration: 100ms;
+}
